@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -68,6 +69,7 @@ int main(void)
 			continue;
 		}
 
+		int status;
 		pid_t pid = fork();
 		if (pid < 0) {
 			perror("fork");
@@ -81,6 +83,9 @@ int main(void)
 		/* TODO: If execvp returns, it failed */
 		} else {
 			/* TODO: Parent: wait for child */
+			if (waitpid(pid, &status, 0) < 0) {
+				perror("waitpid");
+			}
 		}
 	}
 	return 0;
