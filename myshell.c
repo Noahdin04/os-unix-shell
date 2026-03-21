@@ -8,9 +8,6 @@
 #define MAX_INPUT 1024
 #define MAX_ARGS 64
 
-/* TODO: Implement a safe parser that fills argv[] and returns argc.
-Requirements: argv must end with NULL. Handle extra spaces. */
-
 static int parse_command(char *line, char *argv[], int max_args)
 {
 	int argCount = 0;
@@ -64,7 +61,6 @@ int main(void)
 			break;
 		}
 
-		/* TODO: parse_command(input, argv, MAX_ARGS); if no args, continue */
 		if (parse_command(input, argv, MAX_ARGS) == 0) {
 			continue;
 		}
@@ -76,13 +72,10 @@ int main(void)
 			continue;
 		}
 		if (pid == 0) {
-			/* TODO: Child: execute command */
 			execvp(argv[0], argv);
 			perror("execvp");
 			exit(1);
-		/* TODO: If execvp returns, it failed */
 		} else {
-			/* TODO: Parent: wait for child */
 			if (waitpid(pid, &status, 0) < 0) {
 				perror("waitpid");
 			}
