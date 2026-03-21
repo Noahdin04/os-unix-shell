@@ -12,10 +12,18 @@ Requirements: argv must end with NULL. Handle extra spaces. */
 
 static int parse_command(char *line, char *argv[], int max_args)
 {
+	int argCount = 0;
 
+	char *current = strtok(line, " \t");
 
+	while (current != NULL && argCount < max_args - 1) {
+		argv[argCount++] = current;
+		current = strtok(NULL, " \t");
+	}
 
-	return 0;
+	argv[argCount] = NULL;
+
+	return argCount;
 }
 
 int main(void)
@@ -66,10 +74,13 @@ int main(void)
 			continue;
 		}
 		if (pid == 0) {
-		/* TODO: Child: execute command */
+			/* TODO: Child: execute command */
+			execvp(argv[0], argv);
+			perror("execvp");
+			exit(1);
 		/* TODO: If execvp returns, it failed */
 		} else {
-		/* TODO: Parent: wait for child */
+			/* TODO: Parent: wait for child */
 		}
 	}
 	return 0;
