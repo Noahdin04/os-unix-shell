@@ -45,41 +45,60 @@ int main(void)
 
 		/* removes leading whitespace characters from the buffer */
 		char *p = input;
-		while (*p == ' ' || *p == '\t') {
-			p++;
-		}
-		strcpy(input, p);
-
-		/* if empty line, continue */
-		if (input[0] == '\0') {
-			continue;
-		}
-
-		/* if input == "exit", print message and break */
-		if (strcmp(input, "exit") == 0) {
-			printf("Shell terminated.\n");
-			break;
-		}
-
-		if (parse_command(input, argv, MAX_ARGS) == 0) {
-			continue;
-		}
-
-		int status;
-		pid_t pid = fork();
-		if (pid < 0) {
-			perror("fork");
-			continue;
-		}
-		if (pid == 0) {
-			execvp(argv[0], argv);
-			perror("execvp");
-			exit(1);
-		} else {
-			if (waitpid(pid, &status, 0) < 0) {
-				perror("waitpid");
-			}
-		}
-	}
-	return 0;
+                while (*p == ' ' || *p == '\t') {
+                        p++;
+                }
+                strcpy(input, p);
+                /* if empty line, continue */
+                if (input[0] == '\0') {
+                        continue;
+                }
+                /* if input == "exit", print message and break */
+                if (strcmp(input, "exit") == 0) {
+                        printf("Shell terminated.\n");
+                        break;
+                }
+                /* check for trailing & before parsing */
+                int is_background = 0;
+                int i = strlen(input);
+                /* starts at the end of the input and searches backwards for & */
+                while (i > 0 && (input[i-1] == ' ' || input[i-1] == '\t')) {
+                        i--;
+                }
+                if (i > 0 && input[i-1] == '&') {
+                        is_background = 1;
+                        input[i-1] = '\0';
+                        i--;
+                        /* trim spaces between last arg and '&' */
+                        while (i > 0 && (input[i-1] == ' ' || input[i-1] == '\t')) {
+                                input[--i] = '\0';
+                        }
+                }
+                /* TODO: parse_command(input, argv, MAX_ARGS); if no args, continue */
+                if (parse_command(input, argv, MAX_ARGS) == 0) {
+                        continue;
+                }
+                pid_t pid = fork();
+                if (pid < 0) {
+                        perror("fork");
+                        continue;
+                }
+                if (pid == 0) {
+                        /* TODO: Child: execute command */
+                        execvp(argv[0], argv);
+                        perror("execvp");
+                        exit(1);
+                /* TODO: If execvp returns, it failed */
+                } else {
+                        if (is_background) {
+                                printf("[running in background]\n");
+                        } else {
+                                int status;
+                                if (waitpid(pid, &status, 0) < 0) {
+                                        perror("waitpid");
+                                }
+                        }
+                }
+        }
+        return 0;
 }
