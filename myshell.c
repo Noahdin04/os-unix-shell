@@ -25,11 +25,21 @@ static int parse_command(char *line, char *argv[], int max_args)
 	return argCount;
 }
 
+static void collect_dead_children() {
+	while (waitpid(-1, NULL, WNOHANG) > 0);
+}
+
 int main(void)
 	{
 	char input[MAX_INPUT];
 	char *argv[MAX_ARGS];
+	char *left_argv[MAX_ARGS];
+	char *right_argv[MAX_ARGS];
+	char *pipe_pos;
+
 	while (1) {
+		/* stops any completed processes to prevent any zombie processes from existing */
+		collect_dead_children();
 
 		/* print prompt and flush */
 		printf("myshell> ");
@@ -167,19 +177,19 @@ int main(void)
 
                 char *in_file = NULL;
                 char *out_file = NULL;
-        
+
                 char *clean_argv[MAX_ARGS];
                 int j = 0;
-        
+
                 for (int i = 0; argv[i] != NULL; i++) {
-        
+
                     if (strcmp(argv[i], "<") == 0) {
                         if (argv[i + 1] == NULL) {
                             printf("Error,  requires a filename.\n");
                             continue;
                         }
                         in_file = argv[i + 1];
-                        i++; 
+                        i++;
                     }
                     else if (strcmp(argv[i], ">") == 0) {
                         if (argv[i + 1] == NULL) {
@@ -187,22 +197,22 @@ int main(void)
                             continue;
                         }
                         out_file = argv[i + 1];
-                        i++; 
+                        i++;
                     }
                     else {
                         clean_argv[j++] = argv[i];
                     }
                 }
-        
+
                 clean_argv[j] = NULL;
-        
+
                 if (clean_argv[0] == NULL) {
                     continue;
                 }
 
                 /* -=-=-=-=-=-=-= End of Redirection Parsing -=-=-=-=-=-=-= */
 
-                
+
                 pid_t pid = fork();
 
                 if (pid < 0) {
@@ -213,7 +223,7 @@ int main(void)
                         /* TODO: Child: execute command */
 
                         /* -=-=-=-=-=-=-= Input Redirection -=-=-=-=-=-=-= */
-                        
+
                         if (in_file != NULL) {
                                 int fd = open(in_file, O_RDONLY);
                                 if (fd < 0) {
@@ -223,7 +233,7 @@ int main(void)
                                 dup2(fd, STDIN_FILENO);
                                 close(fd);
                             }
-                
+
                             /* -=-=-=-=-=-=-= Output Redirection -=-=-=-=-=-=-= */
 
                             if (out_file != NULL) {
@@ -235,7 +245,7 @@ int main(void)
                                 dup2(fd, STDOUT_FILENO);
                                 close(fd);
                             }
-                
+
                             execvp(clean_argv[0], clean_argv);
                             perror("execvp");
                             exit(1);
