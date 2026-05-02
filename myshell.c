@@ -80,6 +80,81 @@ int main(void)
                         }
                 }
 
+                pipe_pos = strchr(input, '|');
+
+                if (pipe_pos != NULL) {
+
+                    *pipe_pos = '\0';
+                    pipe_pos++;
+
+                    while (*pipe_pos == ' ' || *pipe_pos == '\t') {
+                        pipe_pos++;
+                    }
+
+                    if (parse_command(input, left_argv, MAX_ARGS) == 0) {
+                        continue;
+                    }
+
+                    if (parse_command(pipe_pos, right_argv, MAX_ARGS) == 0) {
+                        continue;
+                    }
+
+                    int pfd[2];
+
+                    if (pipe(pfd) < 0) {
+                        perror("pipe");
+                        continue;
+                    }
+
+                    pid_t left_pid = fork();
+
+                    if (left_pid < 0) {
+                        perror("fork");
+                        continue;
+                    }
+
+                    if (left_pid == 0) {
+                        dup2(pfd[1], STDOUT_FILENO);
+
+                        close(pfd[0]);
+                        close(pfd[1]);
+
+                        execvp(left_argv[0], left_argv);
+                        perror("execvp");
+                        exit(1);
+                    }
+
+                    pid_t right_pid = fork();
+
+                    if (right_pid < 0) {
+                        perror("fork");
+                        continue;
+                    }
+
+                    if (right_pid == 0) {
+                        dup2(pfd[0], STDIN_FILENO);
+
+                        close(pfd[1]);
+                        close(pfd[0]);
+
+                        execvp(right_argv[0], right_argv);
+                        perror("execvp");
+                        exit(1);
+                    }
+
+                    close(pfd[0]);
+                    close(pfd[1]);
+
+                    if (is_background) {
+                        printf("[running in background]\n");
+                    } else {
+                        waitpid(left_pid, NULL, 0);
+                        waitpid(right_pid, NULL, 0);
+                    }
+
+                    continue;
+                }
+
 
                 /* -=-=-=-=-=-=-= parse command -=-=-=-=-=-=-= */
 
