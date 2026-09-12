@@ -1,25 +1,48 @@
-Course Name: Operating Systems (CS 4500)
-Group Member Names:
-    - Justin Jenkins: 700-727-484
-    - Noah Dinwiddie: 700-731-945
-    - Olivia Mirley: 700-749-696
+# myshell — A Minimal Unix Shell in C
 
-To compile:
-    gcc myshell.c -o myshell
+A small Unix shell built for Operating Systems (CS 4500), implementing the core
+process-control and I/O mechanisms a real shell relies on: process creation,
+file descriptor manipulation, and inter-process communication via direct
+syscalls (`fork`, `execvp`, `pipe`, `dup2`, `waitpid`).
 
-To run:
-    ./myshell
+## Authors
 
-Phase 2 Features Implemented:
-    - Foreground command execution
-    - Background command execution (trailing &)
-    - Output redirection (>)
-    - Input redirection (<)
-    - Pipes (|)
-    - Zombie process cleanup
-    - Invalid syntax checking
+Group project by:
+- Noah Dinwiddie
+- Justin Jenkins
+- Olivia Mirley
 
-Known Limitations:
-    - Only a single pipe is supported (no chaining, e.g. cmd1 | cmd2 | cmd3)
-    - No built-in commands (e.g. cd, export) beyond exit
-    - No command history so using up arrows just types ^[[A instead of going to the previous command
+## Build
+
+​```
+gcc myshell.c -o myshell
+​```
+
+## Run
+
+​```
+./myshell
+​```
+
+## Features
+
+- **Foreground execution** via `fork` + `execvp` with parent-side `waitpid`
+- **Background execution** — a trailing `&` runs a command without blocking the prompt
+- **Pipes** — connects two commands with `|`, wiring `stdout` to `stdin` via `pipe` + `dup2`
+- **Input/output redirection** — `<` and `>` remap a child's `stdin`/`stdout` to files
+- **Zombie process cleanup** — completed background children reaped each loop with non-blocking `waitpid(..., WNOHANG)`
+- **Invalid syntax checking**
+
+## Example
+
+​```
+myshell> ls -l | grep .c
+myshell> cat < input.txt > output.txt
+myshell> sleep 5 &
+​```
+
+## Known Limitations
+
+- Only a single pipe is supported (no chaining, e.g. `cmd1 | cmd2 | cmd3`)
+- No built-in commands beyond `exit` (e.g. `cd`, `export`)
+- No command history — up arrow prints `^[[A` rather than recalling the previous command
